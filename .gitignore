@@ -1,0 +1,12 @@
+# Targets
+randln
+
+# Objects and archives
+*.o
+*.a
+*.so
+*.dylib
+
+# Debug files
+core
+*.dSYM/

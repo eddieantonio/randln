@@ -48,7 +48,7 @@ static const char *program_name;
 static void init_random();
 __attribute__((noreturn)) static void usage_error();
 static TextSegment read_file(const char *path);
-static unsigned int count_lines(TextSegment segment);
+static long count_lines(TextSegment segment);
 static void randomize_lines(FILE* output, TextSegment text, long line_count);
 
 
@@ -83,7 +83,7 @@ init_random()
 
     file = fopen("/dev/urandom", "r");
     if (file == NULL) {
-        perror("Could not open /def/urandom");
+        perror("Could not open /dev/urandom");
         exit(EXIT_FAILURE);
     }
 
@@ -113,7 +113,7 @@ random_line(TextSegment lines[], size_t count)
 }
 
 static void
-swap_lines(TextSegment *a, TextSegment *b)
+swap_lines(TextSegment * restrict a, TextSegment *b)
 {
     TextSegment temporary;
     temporary = *b;
@@ -130,7 +130,11 @@ shuffle(TextSegment lines[], size_t count)
     for (size_t i = 0; i < (count - 1); i++) {
         TextSegment *this_line = &lines[i];
         /* Fetch random line from the rest. */
-        swap_lines(this_line, random_line(this_line + 1, count - i - 1));
+        TextSegment *other_line = random_line(this_line, count - i);
+
+        if (this_line != other_line) {
+            swap_lines(this_line, other_line);
+        }
     }
 }
 
@@ -153,7 +157,9 @@ read_file(const char *path)
     }
 
     if (fstat(fileno(file), &info) < 0) {
-        perror("Could not stat file");
+        fprintf(stderr, "Could not stat %s", path);
+        perror(NULL);
+        exit(-1);
     }
 
     length = info.st_size;
@@ -169,6 +175,7 @@ read_file(const char *path)
     if (mapping == MAP_FAILED) {
         fprintf(stderr, "Could not map file %s", path);
         perror(NULL);
+        exit(-1);
     }
 
     return (TextSegment) {
@@ -178,10 +185,10 @@ read_file(const char *path)
 }
 
 
-static unsigned int
+static long
 count_lines(TextSegment segment)
 {
-    unsigned count = 0;
+    long count = 0;
     const char *end = segment.start + segment.length;
 
     for (const char *c = segment.start; c < end; c++) {
@@ -190,9 +197,9 @@ count_lines(TextSegment segment)
         }
     }
 
-    /* Check if there is a trailing newline (there usually is). */
-    if (end[-1] == '\n') {
-        count--;
+    /* Check if there is no trailing newline (there usually is). */
+    if (end[-1] != '\n') {
+        count++;
     }
 
     return count;
@@ -239,10 +246,10 @@ randomize_lines(FILE* output, TextSegment text, long line_count)
     long count = populate_lines(text, lines, line_count);
     assert(count == line_count);
 
-    shuffle(lines , line_count);
+    shuffle(lines , count);
 
     /* Print dem lines. */
-    for (int i = 0; i < line_count; i++) {
+    for (int i = 0; i < count; i++) {
         put_text_segment(output, lines[i]);
         putc('\n', output);
     }

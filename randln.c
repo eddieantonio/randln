@@ -261,8 +261,10 @@ static void
 usage_error(const char *string)
 {
     if (string != NULL) {
-        fprintf(stderr, "%s\n", string);
+        fprintf(stderr, "%s: %s\n\n", program_name, string);
     }
+
+    fprintf(stderr, "Usage: %s input.txt\n", program_name);
 
     exit(-1);
 }

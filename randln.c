@@ -113,7 +113,7 @@ random_line(TextSegment lines[], size_t count)
 }
 
 static void
-swap_lines(TextSegment * restrict a, TextSegment *b)
+swap_lines(TextSegment * restrict a, TextSegment * restrict b)
 {
     TextSegment temporary;
     temporary = *b;
